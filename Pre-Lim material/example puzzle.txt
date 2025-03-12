@@ -1,0 +1,29 @@
+1 - number of symbols allowed
+----- the symbols
+T
+-----
+1 - number of patterns allowed
+----- the patterns
+T,TTT**T**T
+-----
+4 - number of rows and columns
+----- rows and columns
+T,T
+T,T
+T,T
+,
+,
+T,T
+,
+,
+,
+T,T
+,
+,
+,
+T,T
+,
+,
+-----
+0 - current score
+10 number of moves left

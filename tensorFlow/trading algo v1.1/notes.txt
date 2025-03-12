@@ -1,0 +1,16 @@
+got full analytic data frame
+got array of the top 10% of data frames for each time scale [3day,5day,10day]
+
+need to select the top data frames' analytics -> sort of stitch the 2 data frames together
+    look at the symbol in each of the top data frames
+    collect the row of the most recent day of their analytic data -> to use to predict off of
+    put this into a new array -> each element in the array is a single row of individual data frames
+    then iterate through the array and look pass the values into the buy binary classification neural network 
+
+dont want to get 3 different data frames, want to get the stocks with highest weighted average increase
+    Based on the same weights that are used to train the buy neural network
+        3 day -> 2
+        5 day -> 1
+        10 day -> 0.5
+            can change weights if want to look at more long term outcome
+                ie increase weight of 10 day and decrease weight of 3 day

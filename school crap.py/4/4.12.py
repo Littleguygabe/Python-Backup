@@ -1,0 +1,12 @@
+surname = str(input('enter surname '))
+firstname = str(input('enter first name '))
+dob = str(input('enter DoB (dd/mm/yy) '))
+town = str(input('enter your town/city '))
+tn = int(input('enter your telephone num '))
+postcode = str(input('enter your postcode '))
+address = str(input('enter your address '))
+
+print('surname: ',surname,'|','DoB', dob,'|', 'Tel:No:',tn)
+print('forename: ',firstname,'|','Town/City: ',town,'|','Postcode: ',postcode)
+print('')
+print('Address: ',address)

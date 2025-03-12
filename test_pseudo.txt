@@ -1,0 +1,9 @@
+DEFINE CLASS agentConfigDimensions():
+    SET windowHeight TO 330
+
+    SET user32 TO ctypes.windll.user32
+    SET screen_width,screen_height TO user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    windowWidth=int(screen_width*0.2)
+
+    SET windowX TO 150
+    SET windowY TO 150
