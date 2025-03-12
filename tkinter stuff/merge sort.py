@@ -39,4 +39,4 @@ arr = []
 for i in range(50,0,-1):
      arr.append(i)
 
-mergeSort()
+mergeSort(arr)

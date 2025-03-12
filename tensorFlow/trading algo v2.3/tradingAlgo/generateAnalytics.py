@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import os
 import matplotlib.pyplot as plt
 
 RED = '\033[91m'
@@ -199,13 +199,13 @@ class buySellPoints():
 
         #### ^^^ all the logic to control the buying algorithms
 
-        self.plotPagainstPrice()
+        return self.plotPagainstPrice()
 
     def plotPagainstPrice(self):
         plotSellSideAnalytics = False
         plotBuySideAnalytics = False
 
-        plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
+        #plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
         buyIndexes = []
         buyPrices = []
 
@@ -223,8 +223,8 @@ class buySellPoints():
                 sellIndexes.append(curPoint[2])
                 sellPrices.append(curPoint[1])            
         
-        plt.scatter(buyIndexes,buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
-        plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
+        #plt.scatter(buyIndexes,buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
+        #plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
 
         if plotSellSideAnalytics:
             plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI')
@@ -263,19 +263,74 @@ class buySellPoints():
         
         plt.grid(True)
         
-        plt.legend()
-        plt.show()
+        #plt.legend()
+        #plt.show()
+
+        profitEvaluator = profitEval(self.points,self.rawdf)
+        return profitEvaluator.zipBuySell()
 
 class profitEval():
-    def main(self,buyPoints,sellPoints,rawdf):
-        self.buyPoints = buyPoints
-        self.sellPoints = sellPoints
+    def __init__(self,points,rawdf):
+        self.points = points
         self.rawdf = rawdf
 
     def zipBuySell(self):
-        pass
-    
+        sortedPoints = self.quickSortPoints(self.points)
+        strippedPoints = self.getSingleBuyToSellPoints(sortedPoints)
 
+        return self.plotBuyToSellPoints(strippedPoints)
+
+
+    def plotBuyToSellPoints(self,strippedPoints):
+        sumOfIncreases = 0
+
+        #0,plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label = 'Price')
+        for i in range(0,len(strippedPoints)-1,2):
+            sumOfIncreases+= round(strippedPoints[i+1][1]/strippedPoints[i][1],3)
+            #plt.plot([strippedPoints[i][2],strippedPoints[i+1][2]],[strippedPoints[i][1],strippedPoints[i+1][1]],color='red')
+
+
+        print(f'average increase per investment ->\t{sumOfIncreases/(len(strippedPoints)/2)} \t{self.rawdf.loc[0,'symbol']}')
+
+        plt.legend()
+        plt.grid(True)
+        #plt.show()
+
+        return sumOfIncreases/(len(strippedPoints)/2)
+
+    def getSingleBuyToSellPoints(self,sortedPoints):
+        bs = 0
+        strippedPoints = []
+        for i in range(len(sortedPoints)-1):
+            if bs%2 == 0 and sortedPoints[i][0]=='Buy':
+                strippedPoints.append(sortedPoints[i])
+                bs+=1
+
+            elif bs%2 == 1 and sortedPoints[i][0]=='Sell':
+                strippedPoints.append(sortedPoints[i])
+                bs+=1
+
+        return strippedPoints
+
+    def quickSortPoints(self,arr):
+        less = []
+        greater = []
+        equal = []
+
+        if len(arr)>1:
+            pivot = arr[0][2]
+            for x in arr:
+                if x[2]<pivot:
+                    less.append(x)
+                elif x[2]>pivot:
+                    greater.append(x)
+                else:
+                    equal.append(x)
+
+            return self.quickSortPoints(less)+equal+self.quickSortPoints(greater)
+        
+        else:
+            return arr
 
 
 def splitIndicatorsMetrics(rawdf):
@@ -297,31 +352,40 @@ def getAnalyticDf(rawdf):
     #plotBands(rawdf)
 
     bsp = buySellPoints(rawdf)
-    bsp.generatePoints()
+    averageValuation = bsp.generatePoints()
 
     indicators,metrics = splitIndicatorsMetrics(rawdf)
 
 
-    colnames = rawdf.columns.tolist()
+    """colnames = rawdf.columns.tolist()
     for col in colnames:
         print(col)
 
     print(indicators)
-    print(metrics)
+    print(metrics) """
 
-    return indicators
+    return indicators,averageValuation
 
 
 def main(rawdf):
-    rawdf = getAnalyticDf(rawdf)
+    rawdf,avgVal = getAnalyticDf(rawdf)
     
-    return rawdf
+    return rawdf,avgVal
 
 if __name__ == '__main__':
-    testRawdf = pd.read_csv('nasdaq100/AAPL.csv')
-    testOutputDF = main(testRawdf[::-1])
+    stockIndxs = []
+    avgReturn = []
 
-    testOutputDF.to_csv('testOutput.csv')
+    fileList = os.listdir('nasdaq100')
+    for i in range(len(fileList)):
+        testRawdf = pd.read_csv(f'nasdaq100/{fileList[i]}')
+        testOutputDF,avgVal = main(testRawdf[::-1])
+        stockIndxs.append(i)
+        avgReturn.append(avgVal-1)
+
+    plt.scatter(stockIndxs,avgReturn)
+    plt.show()
+
 
     
 
