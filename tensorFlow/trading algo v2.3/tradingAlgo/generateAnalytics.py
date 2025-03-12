@@ -203,7 +203,7 @@ class buySellPoints():
 
     def plotPagainstPrice(self):
         plotSellSideAnalytics = False
-        plotBuySideAnalytics = True
+        plotBuySideAnalytics = False
 
         plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
         buyIndexes = []
@@ -265,6 +265,18 @@ class buySellPoints():
         
         plt.legend()
         plt.show()
+
+class profitEval():
+    def main(self,buyPoints,sellPoints,rawdf):
+        self.buyPoints = buyPoints
+        self.sellPoints = sellPoints
+        self.rawdf = rawdf
+
+    def zipBuySell(self):
+        pass
+    
+
+
 
 def splitIndicatorsMetrics(rawdf):
     indicatorCols = ['10to50SMA','10to50EMA','MACDSIG','RSIindicator','ATRindicator','BBWClsPctDifIndicator','buyingPressureIndicator','RSIdifIndicator']
