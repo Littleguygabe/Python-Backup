@@ -20,6 +20,8 @@ MACDline
 SigLine
 MACDSIG
 MACDSIGchanged
+normMACDSIGdif -> x100 to scale between 0 and 100
+normMACDSIGindicator -> 1 if dif>threshold
 DailyChange
 Gain
 Loss
@@ -40,6 +42,7 @@ BBWClsPctDifIndicator - close to upper band -> 2 close to lower band -> 1
 OBV
 normalisedOBV -> multipled by 100 to normalise between 0 and 100
 normOBVSMA10
+normOBVSMAindicator -> norm obv > SMA obv -> 1 otherwise -1
 buyingPressureIndicator
 
 NEED to get gradient of OBV over the last 5 days
@@ -47,3 +50,7 @@ NEED to get gradient of OBV over the last 5 days
         ie decreasing by a certain amount every day on average
 
     then set a buy point
+
+
+For sell look at the difference between the macd and sig SigLine    
+    high difference indicates peak/increasing difference

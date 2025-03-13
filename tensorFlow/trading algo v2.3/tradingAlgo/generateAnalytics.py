@@ -12,6 +12,7 @@ class thresholdVals:
     upperBandThresh = 25
     lowerATRThresh = 25 #threshold to classify stock as stable based on atr
     upperATRThresh = 25 #threshold to classify stock as volatile/risky
+    highMACDSIGdif = 72
 
 
     highRSI = 60
@@ -59,6 +60,10 @@ def getMACDSIG(rawdf):
 
     rawdf['MACDSIG'] = rawdf['MACDSIG'].apply(colourText)
     rawdf['MACDSIGchanged'] = rawdf['MACDSIG']-rawdf['MACDSIG'].shift(1)
+
+
+    rawdf['normMACDSIGdif'] = min_max_normalize(rawdf['MACDline']-rawdf['SigLine'])*100
+    rawdf['normMACDSIGindicator'] = np.where(rawdf['normMACDSIGdif']>thresholdVals.highMACDSIGdif,1,0)
     return rawdf
 
 def getRSI(rawdf):
@@ -125,8 +130,8 @@ def getOBV(rawdf):
 
     rawdf['normalisedOBV'] = min_max_normalize(rawdf['OBV'])
     rawdf['normalisedOBV']*=100
-    rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].rolling(window=10).mean()
-    #rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].ewm(span=100,adjust=False).mean()
+    #rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].rolling(window=10).mean()
+    rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].ewm(span=25,adjust=False).mean()
 
     rawdf['normOBVSMAindicator'] = np.where(rawdf['normalisedOBV']>rawdf['normOBVSMA100'],1,-1)
 
@@ -168,9 +173,9 @@ class buySellPoints():
     def shouldBuyStock(self,i):
         curSeries = self.rawdf.loc[i]
         #if curSeries['BBWClsPctDifIndicator'] == 1 and curSeries['RSIindicator']>=1 and curSeries['normOBVSMAindicator']==-1: #weirdly has generated good points for exit not entry
-        if (curSeries['RSIindicator']==-1 and
-            curSeries['BBWClsPctDifIndicator'] == 1):
-       
+        if (curSeries['RSIindicator']==-1
+            and curSeries['BBWClsPctDifIndicator'] == 1
+            and curSeries['normOBVSMAindicator'] == -1):
         ### basically want to be able to identify the where every trough is -> once can do that then good
 
             return True
@@ -182,7 +187,8 @@ class buySellPoints():
         curSeries = self.rawdf.loc[i]
         #if curSeries['BBWClsPctDifIndicator'] == 2 and curSeries['SMA10']>curSeries['EMA10'] and curSeries['MACDSIG']>0 and curSeries['RSIindicator'] <2:
         if (curSeries['RSIdifIndicator']==1 and curSeries['EMA10']>curSeries['SMA10'] and (curSeries['MACDline']+curSeries['SigLine'])/2>(thresholdVals.highMACDSIGavg/10)
-            and curSeries['RSIindicator'] > 1):
+            and curSeries['RSIindicator'] > 1
+            and curSeries['normMACDSIGindicator']==1 ):
             return True
 
         return False 
@@ -202,7 +208,7 @@ class buySellPoints():
 
     def plotPagainstPrice(self):
         plotSellSideAnalytics = False
-        plotBuySideAnalytics = True
+        plotBuySideAnalytics = False
 
         plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
         buyIndexes = []
@@ -226,44 +232,68 @@ class buySellPoints():
         plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
 
         if plotSellSideAnalytics:
-            plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI')
+            option = 2
+            if option == 1:
+                plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI')
+                plt.plot(self.rawdf.index,self.rawdf['MACDline']*10,label='MACD*10')
+                plt.plot(self.rawdf.index,self.rawdf['SigLine']*10,label='Sig line * 10')
+                plt.plot(self.rawdf.index,self.rawdf['SMA10'],label='SMA10')
+                plt.plot(self.rawdf.index,self.rawdf['EMA10'],label='EMA10')
+                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
+
+                plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',label = 'high MACDSIG avg thresh',color = 'green')
+                plt.axhline(y=thresholdVals.rsiDif,linestyle = '--',label = 'rsiDif threshold',color = 'red')
+                plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh')
+                plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh')
+                plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
+            
+                plt.plot(self.rawdf.index,self.rawdf['RSIdifIndicator']*10,label='RSIdifIndicator*10',alpha=1)
+                
+                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
+
+                plt.plot(self.rawdf.index,self.rawdf['MACDSIG']*10,label='MACDSIG*10',alpha=1)
+                plt.plot(self.rawdf.index,self.rawdf['MACDSIGchanged']*10,label='MACDSIGchanged*10',alpha=0.5)
+            
+
+            elif option == 2:
+                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label = 'RSI prev dif',color='purple',alpha=0.5)
+                plt.plot(self.rawdf.index,self.rawdf['SMA10'],label = 'sma10',color='black',alpha=1)               
+                plt.plot(self.rawdf.index,self.rawdf['EMA10'],label = 'EMA10',color='red')       
+                plt.plot(self.rawdf.index,((self.rawdf['MACDline']+self.rawdf['SigLine'])/2)*10,label = 'MACD SIG average',color = 'pink')
+                plt.plot(self.rawdf.index,self.rawdf['normMACDSIGdif'],label = 'normMACDSIGdif',color = 'orange')
+
+
+                plt.axhline(y=thresholdVals.rsiDif,linestyle='--',color='purple',label='rsi dif threshold')
+                plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',color='pink',label='macdSig avg')
+                plt.axhline(y=thresholdVals.highMACDSIGdif,linestyle='--',color='orange',label = 'high macd sig dif threshold')
+
+
+
+
+
+        if plotBuySideAnalytics:
             plt.plot(self.rawdf.index,self.rawdf['MACDline']*10,label='MACD*10')
             plt.plot(self.rawdf.index,self.rawdf['SigLine']*10,label='Sig line * 10')
-            plt.plot(self.rawdf.index,self.rawdf['SMA10'],label='SMA10')
-            plt.plot(self.rawdf.index,self.rawdf['EMA10'],label='EMA10')
-            plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
+            plt.plot(self.rawdf.index,self.rawdf['normMACDSIGdif'],label = 'normalised dif between macd and sig')
 
-            plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',label = 'high MACDSIG avg thresh',color = 'green')
-            plt.axhline(y=thresholdVals.rsiDif,linestyle = '--',label = 'rsiDif threshold',color = 'red')
-            plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh')
-            plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh')
-            plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
-        
-            plt.plot(self.rawdf.index,self.rawdf['RSIdifIndicator']*10,label='RSIdifIndicator*10',alpha=1)
-            
-            plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
-
-            plt.plot(self.rawdf.index,self.rawdf['MACDSIG']*10,label='MACDSIG*10',alpha=1)
-            plt.plot(self.rawdf.index,self.rawdf['MACDSIGchanged']*10,label='MACDSIGchanged*10',alpha=0.5)
-        
-        
-        if plotBuySideAnalytics:
             plt.plot(self.rawdf.index,self.rawdf['LBClsPctDif'],label = 'LBClsPctDif',alpha=0.5)
             plt.plot(self.rawdf.index,self.rawdf['upperBand'],label='upper')
             plt.plot(self.rawdf.index,self.rawdf['lowerBand'],label='lower')
-            plt.axhline(thresholdVals.lowerBandThresh,linestyle = '--',label = 'pctdif to lower band thresh')
-            plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI',alpha=0.5)
-            plt.plot(self.rawdf.index,self.rawdf['normalisedOBV'],label='normalisedOBV',alpha=0.5)
-            plt.plot(self.rawdf.index,self.rawdf['normOBVSMA100'],label='normOBVSMA10',alpha=1,color='pink')
+            plt.axhline(thresholdVals.highMACDSIGdif,linestyle = '--',label = 'high macd sig dif threshold')
 
-            plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh',color = 'red')
-            plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh',color='orange')       
-            plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
+            #plt.axhline(thresholdVals.lowerBandThresh,linestyle = '--',label = 'pctdif to lower band thresh')
+            #plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI',alpha=0.5)
+            #plt.plot(self.rawdf.index,self.rawdf['normalisedOBV'],label='normalisedOBV',alpha=0.5)
+            #plt.plot(self.rawdf.index,self.rawdf['normOBVSMA100'],label='normOBVSMA10',alpha=1,color='pink')
+
+            #plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh',color = 'red')
+            #plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh',color='orange')       
+            #plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
         
-        plt.grid(True)
+        #plt.grid(True)
         
-        plt.legend()
-        plt.show()
+        #plt.legend()
+        #plt.show()
 
         profitEvaluator = profitEval(self.points,self.rawdf)
         return profitEvaluator.zipBuySell()
@@ -379,13 +409,19 @@ if __name__ == '__main__':
     for i in range(len(fileList)):
         testRawdf = pd.read_csv(f'nasdaq100/{fileList[i]}')
         testOutputDF,avgVal = main(testRawdf[::-1])
-        stockIndxs.append(i)
-        avgReturn.append(avgVal-1)
-        exit()
+        if avgVal!=0:
+            stockIndxs.append(i)
+            avgReturn.append(avgVal-1)
+    
+    
+    #plt.scatter(stockIndxs,avgReturn)
+    #plt.show()
+    avgIncrease = round((sum(avgReturn)/len(avgReturn))-1,3)
+    if avgIncrease>0:
+        print(f'Global Average Return -> \t+{avgIncrease*100}%')
 
-    plt.scatter(stockIndxs,avgReturn)
-    plt.show()
-
+    else:
+        print(f'Global Average Return -> \t-{avgIncrease*100}%')
 
     
 
