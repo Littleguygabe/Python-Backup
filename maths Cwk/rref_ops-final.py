@@ -1,36 +1,34 @@
 from sympy import Matrix
 
 def rref_ops(A):
-    """Compute RREF of A and return the list of operations performed."""
-    A = A.copy()  # Work on a copy of the matrix
+    A = A.copy()  
     rows, cols = A.shape
     lead = 0
-    operations = []  # Store elementary row operations
-
+    operations = []  
     for r in range(rows):
-        if lead >= cols:  # Stop if we exceed the column count
+        if lead >= cols:  
             break
 
-        # Find pivot row
+
         i = r
         while i < rows and A[i, lead] == 0:
             i += 1
 
-        if i == rows:  # Entire column is zero, move to the next column
+        if i == rows:  
             lead += 1
             continue
 
-        # Swap current row with the pivot row if necessary
+
         if i != r:
             A.row_swap(i, r)
             operations.append(('swap',r,i))
-        # Normalize the pivot row (make leading coefficient 1)
+
         pivot = A[r, lead]
         if pivot != 1:
             for j in range(cols):
                 A[r, j] /= pivot
             operations.append(('scale',r,1/pivot))
-        # Eliminate all other entries in this column
+
         for i in range(rows):
             if i != r:
                 factor = A[i, lead]
@@ -38,15 +36,27 @@ def rref_ops(A):
                     for j in range(cols):
                         A[i, j] -= factor * A[r, j]
                     operations.append(('replace',i,-1*factor,r))
-        lead += 1  # Move to the next column
+        lead += 1  
+
+        ## need to check that the rows are in the correct order and that an linearly dependent rows are removed
+
+
+    for i in range(rows):
+        for j in range(cols):
+            print('\t',A[i,j],end = ' ')
+
+        print()
 
     return operations
 
 
 A = Matrix([
-    [0, 1],
-    [2, 1]
+    [0,1,-2,2,0,-1],
+    [0,-2,4,-3,1,5],
+    [0,1,-2,3,1,2],
+
 ])
+
 
 print(rref_ops(A))
 
