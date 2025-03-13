@@ -25,7 +25,7 @@ Gain
 Loss
 RelStren
 RSI
-RSIindicator
+RSIindicator - high -> 2, good -> 1, low -> -1, anything else = 0
 RSIprevDif
 RSIdifIndicator
 trueRange
@@ -36,8 +36,14 @@ stdDev
 upperBand
 lowerBand
 LBClsPctDif
-BBWClsPctDifIndicator -> close to upper band - 2 close to lower band -1
+BBWClsPctDifIndicator - close to upper band -> 2 close to lower band -> 1
 OBV
 normalisedOBV -> multipled by 100 to normalise between 0 and 100
 normOBVSMA10
 buyingPressureIndicator
+
+NEED to get gradient of OBV over the last 5 days
+    then if gradient OBV is below a given threshold
+        ie decreasing by a certain amount every day on average
+
+    then set a buy point

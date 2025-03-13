@@ -8,7 +8,7 @@ GREEN = '\033[92m'
 RESET = '\033[0m'
 
 class thresholdVals:
-    lowerBandThresh = 10
+    lowerBandThresh = 25
     upperBandThresh = 25
     lowerATRThresh = 25 #threshold to classify stock as stable based on atr
     upperATRThresh = 25 #threshold to classify stock as volatile/risky
@@ -125,7 +125,7 @@ def getOBV(rawdf):
 
     rawdf['normalisedOBV'] = min_max_normalize(rawdf['OBV'])
     rawdf['normalisedOBV']*=100
-    rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].rolling(window=100).mean()
+    rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].rolling(window=10).mean()
     #rawdf['normOBVSMA100'] = rawdf['normalisedOBV'].ewm(span=100,adjust=False).mean()
 
     rawdf['normOBVSMAindicator'] = np.where(rawdf['normalisedOBV']>rawdf['normOBVSMA100'],1,-1)
@@ -167,11 +167,10 @@ class buySellPoints():
 
     def shouldBuyStock(self,i):
         curSeries = self.rawdf.loc[i]
-        if curSeries['BBWClsPctDifIndicator'] == 1 and curSeries['RSIindicator']==-1 and curSeries['normOBVSMAindicator']==-1: #weirdly has generated good points for exit not entry
-
-        #if curSeries['BBWClsPctDifIndicator'] == 1 and curSeries['EMA10']>=curSeries['SMA10']:
-
-
+        #if curSeries['BBWClsPctDifIndicator'] == 1 and curSeries['RSIindicator']>=1 and curSeries['normOBVSMAindicator']==-1: #weirdly has generated good points for exit not entry
+        if (curSeries['RSIindicator']==-1 and
+            curSeries['BBWClsPctDifIndicator'] == 1):
+       
         ### basically want to be able to identify the where every trough is -> once can do that then good
 
             return True
@@ -203,9 +202,9 @@ class buySellPoints():
 
     def plotPagainstPrice(self):
         plotSellSideAnalytics = False
-        plotBuySideAnalytics = False
+        plotBuySideAnalytics = True
 
-        #plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
+        plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
         buyIndexes = []
         buyPrices = []
 
@@ -223,8 +222,8 @@ class buySellPoints():
                 sellIndexes.append(curPoint[2])
                 sellPrices.append(curPoint[1])            
         
-        #plt.scatter(buyIndexes,buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
-        #plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
+        plt.scatter(buyIndexes,buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
+        plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
 
         if plotSellSideAnalytics:
             plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI')
@@ -240,12 +239,12 @@ class buySellPoints():
             plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh')
             plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
         
-            #plt.plot(self.rawdf.index,self.rawdf['RSIdifIndicator']*10,label='RSIdifIndicator*10',alpha=1)
+            plt.plot(self.rawdf.index,self.rawdf['RSIdifIndicator']*10,label='RSIdifIndicator*10',alpha=1)
             
             plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
 
-            #plt.plot(self.rawdf.index,self.rawdf['MACDSIG']*10,label='MACDSIG*10',alpha=1)
-            #plt.plot(self.rawdf.index,self.rawdf['MACDSIGchanged']*10,label='MACDSIGchanged*10',alpha=0.5)
+            plt.plot(self.rawdf.index,self.rawdf['MACDSIG']*10,label='MACDSIG*10',alpha=1)
+            plt.plot(self.rawdf.index,self.rawdf['MACDSIGchanged']*10,label='MACDSIGchanged*10',alpha=0.5)
         
         
         if plotBuySideAnalytics:
@@ -253,7 +252,7 @@ class buySellPoints():
             plt.plot(self.rawdf.index,self.rawdf['upperBand'],label='upper')
             plt.plot(self.rawdf.index,self.rawdf['lowerBand'],label='lower')
             plt.axhline(thresholdVals.lowerBandThresh,linestyle = '--',label = 'pctdif to lower band thresh')
-            #plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI',alpha=0.5)
+            plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI',alpha=0.5)
             plt.plot(self.rawdf.index,self.rawdf['normalisedOBV'],label='normalisedOBV',alpha=0.5)
             plt.plot(self.rawdf.index,self.rawdf['normOBVSMA100'],label='normOBVSMA10',alpha=1,color='pink')
 
@@ -263,8 +262,8 @@ class buySellPoints():
         
         plt.grid(True)
         
-        #plt.legend()
-        #plt.show()
+        plt.legend()
+        plt.show()
 
         profitEvaluator = profitEval(self.points,self.rawdf)
         return profitEvaluator.zipBuySell()
@@ -287,13 +286,13 @@ class profitEval():
         #0,plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label = 'Price')
         for i in range(0,len(strippedPoints)-1,2):
             sumOfIncreases+= round(strippedPoints[i+1][1]/strippedPoints[i][1],3)
-            #plt.plot([strippedPoints[i][2],strippedPoints[i+1][2]],[strippedPoints[i][1],strippedPoints[i+1][1]],color='red')
+            plt.plot([strippedPoints[i][2],strippedPoints[i+1][2]],[strippedPoints[i][1],strippedPoints[i+1][1]],color='red')
 
 
         print(f'average increase per investment ->\t{sumOfIncreases/(len(strippedPoints)/2)} \t{self.rawdf.loc[0,'symbol']}')
 
-        plt.legend()
-        plt.grid(True)
+        #plt.legend()
+        #plt.grid(True)
         #plt.show()
 
         return sumOfIncreases/(len(strippedPoints)/2)
@@ -382,6 +381,7 @@ if __name__ == '__main__':
         testOutputDF,avgVal = main(testRawdf[::-1])
         stockIndxs.append(i)
         avgReturn.append(avgVal-1)
+        exit()
 
     plt.scatter(stockIndxs,avgReturn)
     plt.show()
