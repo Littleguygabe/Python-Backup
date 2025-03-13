@@ -7,6 +7,13 @@ RED = '\033[91m'
 GREEN = '\033[92m'
 RESET = '\033[0m'
 
+class debugOptions:
+    plotTradeGradients = True
+    plotAllBSPoints = False
+
+    plotBuySideAnalytics = False
+    plotSellSideAnalytics = False
+
 class thresholdVals:
     lowerBandThresh = 25
     upperBandThresh = 25
@@ -207,71 +214,56 @@ class buySellPoints():
         return self.plotPagainstPrice()
 
     def plotPagainstPrice(self):
-        plotSellSideAnalytics = False
-        plotBuySideAnalytics = False
+
 
         plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label='Price')
-        buyIndexes = []
-        buyPrices = []
+        self.buyIndexes = []
+        self.buyPrices = []
 
-        sellIndexes = []
-        sellPrices = []
+        self.sellIndexes = []
+        self.sellPrices = []
 
         for i in range(len(self.points)):
             curPoint = self.points[i]
             if curPoint[0]=='Buy':
 
-                buyIndexes.append(curPoint[2])
-                buyPrices.append(curPoint[1])
+                self.buyIndexes.append(curPoint[2])
+                self.buyPrices.append(curPoint[1])
 
             elif curPoint[0]=='Sell':
-                sellIndexes.append(curPoint[2])
-                sellPrices.append(curPoint[1])            
-        
-        plt.scatter(buyIndexes,buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
-        plt.scatter(sellIndexes,sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
+                self.sellIndexes.append(curPoint[2])
+                self.sellPrices.append(curPoint[1])            
 
-        if plotSellSideAnalytics:
-            option = 2
-            if option == 1:
-                plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI')
-                plt.plot(self.rawdf.index,self.rawdf['MACDline']*10,label='MACD*10')
-                plt.plot(self.rawdf.index,self.rawdf['SigLine']*10,label='Sig line * 10')
-                plt.plot(self.rawdf.index,self.rawdf['SMA10'],label='SMA10')
-                plt.plot(self.rawdf.index,self.rawdf['EMA10'],label='EMA10')
-                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
+        if debugOptions.plotAllBSPoints:
+            self.plotDataFromPL()
 
-                plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',label = 'high MACDSIG avg thresh',color = 'green')
-                plt.axhline(y=thresholdVals.rsiDif,linestyle = '--',label = 'rsiDif threshold',color = 'red')
-                plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh')
-                plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh')
-                plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
-            
-                plt.plot(self.rawdf.index,self.rawdf['RSIdifIndicator']*10,label='RSIdifIndicator*10',alpha=1)
-                
-                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label='RSIprevDif',alpha=0.5)
+        profitEvaluator = profitEval(self.points,self.rawdf)
+        return profitEvaluator.zipBuySell()
 
-                plt.plot(self.rawdf.index,self.rawdf['MACDSIG']*10,label='MACDSIG*10',alpha=1)
-                plt.plot(self.rawdf.index,self.rawdf['MACDSIGchanged']*10,label='MACDSIGchanged*10',alpha=0.5)
-            
+       
 
-            elif option == 2:
-                plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label = 'RSI prev dif',color='purple',alpha=0.5)
-                plt.plot(self.rawdf.index,self.rawdf['SMA10'],label = 'sma10',color='black',alpha=1)               
-                plt.plot(self.rawdf.index,self.rawdf['EMA10'],label = 'EMA10',color='red')       
-                plt.plot(self.rawdf.index,((self.rawdf['MACDline']+self.rawdf['SigLine'])/2)*10,label = 'MACD SIG average',color = 'pink')
-                plt.plot(self.rawdf.index,self.rawdf['normMACDSIGdif'],label = 'normMACDSIGdif',color = 'orange')
+    def plotDataFromPL(self):
+
+        plt.scatter(self.buyIndexes,self.buyPrices,label = 'Buy Marker',marker = 'x',color = 'green') 
+        plt.scatter(self.sellIndexes,self.sellPrices,label = 'Sell Marker',marker = 'x',color = 'red') 
+
+        if debugOptions.plotSellSideAnalytics:           
+            plt.plot(self.rawdf.index,self.rawdf['RSIprevDif'],label = 'RSI prev dif',color='purple',alpha=0.5)
+            plt.plot(self.rawdf.index,self.rawdf['SMA10'],label = 'sma10',color='black',alpha=1)               
+            plt.plot(self.rawdf.index,self.rawdf['EMA10'],label = 'EMA10',color='red')       
+            plt.plot(self.rawdf.index,((self.rawdf['MACDline']+self.rawdf['SigLine'])/2)*10,label = 'MACD SIG average',color = 'pink')
+            plt.plot(self.rawdf.index,self.rawdf['normMACDSIGdif'],label = 'normMACDSIGdif',color = 'orange')
 
 
-                plt.axhline(y=thresholdVals.rsiDif,linestyle='--',color='purple',label='rsi dif threshold')
-                plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',color='pink',label='macdSig avg')
-                plt.axhline(y=thresholdVals.highMACDSIGdif,linestyle='--',color='orange',label = 'high macd sig dif threshold')
+            plt.axhline(y=thresholdVals.rsiDif,linestyle='--',color='purple',label='rsi dif threshold')
+            plt.axhline(y=thresholdVals.highMACDSIGavg,linestyle = '--',color='pink',label='macdSig avg')
+            plt.axhline(y=thresholdVals.highMACDSIGdif,linestyle='--',color='orange',label = 'high macd sig dif threshold')
 
 
 
 
 
-        if plotBuySideAnalytics:
+        if debugOptions.plotBuySideAnalytics:
             plt.plot(self.rawdf.index,self.rawdf['MACDline']*10,label='MACD*10')
             plt.plot(self.rawdf.index,self.rawdf['SigLine']*10,label='Sig line * 10')
             plt.plot(self.rawdf.index,self.rawdf['normMACDSIGdif'],label = 'normalised dif between macd and sig')
@@ -279,24 +271,12 @@ class buySellPoints():
             plt.plot(self.rawdf.index,self.rawdf['LBClsPctDif'],label = 'LBClsPctDif',alpha=0.5)
             plt.plot(self.rawdf.index,self.rawdf['upperBand'],label='upper')
             plt.plot(self.rawdf.index,self.rawdf['lowerBand'],label='lower')
-            plt.axhline(thresholdVals.highMACDSIGdif,linestyle = '--',label = 'high macd sig dif threshold')
-
-            #plt.axhline(thresholdVals.lowerBandThresh,linestyle = '--',label = 'pctdif to lower band thresh')
-            #plt.plot(self.rawdf.index,self.rawdf['RSI'],label='RSI',alpha=0.5)
-            #plt.plot(self.rawdf.index,self.rawdf['normalisedOBV'],label='normalisedOBV',alpha=0.5)
-            #plt.plot(self.rawdf.index,self.rawdf['normOBVSMA100'],label='normOBVSMA10',alpha=1,color='pink')
-
-            #plt.axhline(y=thresholdVals.highRSI,linestyle = '--',label = 'high rsi thresh',color = 'red')
-            #plt.axhline(y=thresholdVals.goodRSI,linestyle = '--',label = 'good rsi thresh',color='orange')       
-            #plt.axhline(y=thresholdVals.lowRSI,linestyle = '--',label = 'low rsi thresh')       
+            plt.axhline(thresholdVals.highMACDSIGdif,linestyle = '--',label = 'high macd sig dif threshold')  
         
-        #plt.grid(True)
+        plt.grid(True)
         
-        #plt.legend()
-        #plt.show()
-
-        profitEvaluator = profitEval(self.points,self.rawdf)
-        return profitEvaluator.zipBuySell()
+        plt.legend()
+        plt.show()
 
 class profitEval():
     def __init__(self,points,rawdf):
@@ -306,26 +286,29 @@ class profitEval():
     def zipBuySell(self):
         sortedPoints = self.quickSortPoints(self.points)
         strippedPoints = self.getSingleBuyToSellPoints(sortedPoints)
-
-        return self.plotBuyToSellPoints(strippedPoints)
-
-
-    def plotBuyToSellPoints(self,strippedPoints):
         sumOfIncreases = 0
 
-        #0,plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label = 'Price')
         for i in range(0,len(strippedPoints)-1,2):
             sumOfIncreases+= round(strippedPoints[i+1][1]/strippedPoints[i][1],3)
+        print(f'average increase per investment ->\t{sumOfIncreases/(len(strippedPoints)/2)} \t{self.rawdf.loc[0,'symbol']}')
+
+        if debugOptions.plotTradeGradients:
+            self.plotBuyToSellPoints(strippedPoints)
+
+        return sumOfIncreases/(len(strippedPoints)/2)
+
+    def plotBuyToSellPoints(self,strippedPoints):
+
+        plt.plot(self.rawdf.index,self.rawdf['Close/Last'],label = 'Price')
+        for i in range(0,len(strippedPoints)-1,2):
             plt.plot([strippedPoints[i][2],strippedPoints[i+1][2]],[strippedPoints[i][1],strippedPoints[i+1][1]],color='red')
 
 
-        print(f'average increase per investment ->\t{sumOfIncreases/(len(strippedPoints)/2)} \t{self.rawdf.loc[0,'symbol']}')
 
-        #plt.legend()
-        #plt.grid(True)
-        #plt.show()
 
-        return sumOfIncreases/(len(strippedPoints)/2)
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
     def getSingleBuyToSellPoints(self,sortedPoints):
         bs = 0

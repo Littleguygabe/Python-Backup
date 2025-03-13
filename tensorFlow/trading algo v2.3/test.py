@@ -1,4 +1,8 @@
-list1 = [1,2,3]
-list2 = [4,5,6]
-list3 = list1+list2
-print(list3)
+import os 
+import pandas as pd
+total = 0
+for file in os.listdir('sp500'):
+    total+=len(pd.read_csv(f'sp500/{file}'))
+
+
+print(total)
