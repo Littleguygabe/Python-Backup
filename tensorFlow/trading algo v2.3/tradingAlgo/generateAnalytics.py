@@ -8,7 +8,7 @@ GREEN = '\033[92m'
 RESET = '\033[0m'
 
 class debugOptions:
-    plotTradeGradients = True
+    plotTradeGradients = False
     plotAllBSPoints = False
 
     plotBuySideAnalytics = False

@@ -114,7 +114,7 @@ class breadthFirstSearch():
 def createRandomMaze() -> list[list]:
     coverage = 30 
     width = 30
-    height = 10
+    height = 30
     maze = []
     
     for j in range(height):
@@ -142,11 +142,9 @@ def createRandomMaze() -> list[list]:
 
     finalMaze.append(tempArr)
 
-
-
-
     finalMaze[random.randint(1,height)][0] = '0'
-    finalMaze[random.randint(1,height)][width+1] = '1'
+    finalMaze[random.randint(1,height-1)][(width+1)] = '1'
+
 
 
 
