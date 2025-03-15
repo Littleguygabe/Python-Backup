@@ -8,11 +8,13 @@ GREEN = '\033[92m'
 RESET = '\033[0m'
 
 class debugOptions:
-    plotTradeGradients = False
-    plotAllBSPoints = False
+    plotTradeGradients = True
+    plotAllBSPoints = True
 
-    plotBuySideAnalytics = False
-    plotSellSideAnalytics = False
+    plotBuySideAnalytics = True
+    plotSellSideAnalytics = True
+
+    plotIndicators = False
 
 class thresholdVals:
     lowerBandThresh = 25
@@ -345,11 +347,39 @@ class profitEval():
             return arr
 
 
+import matplotlib.pyplot as plt
+
+def plotIndicators(indicatorsDf):
+    NdfCols = len(indicatorsDf.columns)
+    MaxNoRows = 5
+    Ncols = (NdfCols + MaxNoRows - 1) // MaxNoRows  # Round up to ensure you cover all columns
+
+    fig, axs = plt.subplots(MaxNoRows, Ncols, figsize=(15, 10))
+
+    # Flatten the 2D axs array for easier indexing
+    axs = axs.flatten()
+
+    for i, col in enumerate(indicatorsDf.columns):
+        axs[i].plot(indicatorsDf.index, indicatorsDf[col])
+        axs[i].set_title(col)
+
+    # Hide any unused subplots if they exist
+    for i in range(NdfCols, len(axs)):
+        axs[i].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+
+
 def splitIndicatorsMetrics(rawdf):
-    indicatorCols = ['10to50SMA','10to50EMA','MACDSIG','RSIindicator','ATRindicator','BBWClsPctDifIndicator','buyingPressureIndicator','RSIdifIndicator']
+    indicatorCols = ['Close/Last','10to50SMA','10to50EMA','MACDSIG','MACDSIGchanged','normMACDSIGindicator','RSIindicator','RSIdifIndicator','ATRindicator','BBWClsPctDifIndicator','normOBVSMAindicator','buyingPressureIndicator']
 
     indicatorsDf = rawdf[indicatorCols]
     metricsDf = rawdf.drop(columns=indicatorCols)
+
+    if debugOptions.plotIndicators:
+        plotIndicators(indicatorsDf)
 
     return indicatorsDf,metricsDf
 
@@ -392,6 +422,8 @@ if __name__ == '__main__':
     for i in range(len(fileList)):
         testRawdf = pd.read_csv(f'nasdaq100/{fileList[i]}')
         testOutputDF,avgVal = main(testRawdf[::-1])
+        testOutputDF.to_csv('testOutput.csv')
+        print(testOutputDF)
         if avgVal!=0:
             stockIndxs.append(i)
             avgReturn.append(avgVal-1)
