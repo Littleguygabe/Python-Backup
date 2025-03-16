@@ -47,7 +47,8 @@ buyingPressureIndicator
 
 # Classifying for peak or not variables
 futureNDayPriceGradient -> looks at the gradient of the price in the future by N days
-isPeakIndicator -> 1 for pea
+prevNDayPriceGradient
+isPeakIndicator -> 1 for peak
 
 
 

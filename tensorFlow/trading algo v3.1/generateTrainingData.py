@@ -4,7 +4,7 @@ import os
 
 
 
-indicatorSaveFolder = 'indicatorData'
+indicatorSaveFolder = 'indicatorsTrainingData'
 
 def getindicators(stockDataFolder,file):
     rawdf = pd.read_csv(f'{stockDataFolder}/{file}')
@@ -18,10 +18,16 @@ def getFileList(stockDataFolder):
 def main():
     stockDataFolder = 'nasdaq100'
 
+    count = 1
+    NoStocks = len(getFileList(stockDataFolder))
+
     for file in getFileList(stockDataFolder):
         indicators = getindicators(stockDataFolder,file)
-        print(indicators)
+        symbol = os.path.splitext(file)[0]       
+        indicators.to_csv(f'{indicatorSaveFolder}/{symbol.upper()}.csv')    
 
+        print(f'stock {count}/{NoStocks}')
+        count+=1
 
 
 

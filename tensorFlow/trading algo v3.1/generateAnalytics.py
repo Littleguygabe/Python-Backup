@@ -2,26 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-
-class thresholdVals:
-    lowerBandThresh = 25
-    upperBandThresh = 25
-    lowerATRThresh = 25 #threshold to classify stock as stable based on atr
-    upperATRThresh = 25 #threshold to classify stock as volatile/risky
-    highMACDSIGdif = 72
-
-    peakGradient = -1 #the gradient for 'peakLength' No days after a given point must be less than this to classify as a peak
-        #decreasing gradient threshold and decreasing peak length will get a larger number of short sharp peaks
-    peakLength = 3
-
-    highRSI = 60
-    goodRSI = 50
-    lowRSI = 40
-    rsiDif = 3 #the threshold of difference in RSI between the current and previous day that means a high or low difference
-    highMACDSIGavg = 10 #divide the value by 10 when evalutating -> changes how high the average of the MACD and signal line needs to be in order to constitute a sell point
-
-class weights:
-    BBWweight = 1
+import thresholdVals
 
 
 def getMAs(rawdf):
@@ -129,15 +110,27 @@ def getPeaks(rawdf):
     ## look at the gradient of change for the N days after a point to classify as a peak
 
     rawdf['futureNDayPriceGradient'] = rawdf['DailyChange'].shift((thresholdVals.peakLength-1)*-1).rolling(window=thresholdVals.peakLength).mean() 
-    
-    rawdf['isPeakIndicator'] = np.where(rawdf['futureNDayPriceGradient']<thresholdVals.peakGradient,1,0)
+    rawdf['prevNDayPriceGradient'] = rawdf['DailyChange'].rolling(window=thresholdVals.prePeakLength).mean()
 
-
+    rawdf['isPeakIndicator'] = np.where((rawdf['futureNDayPriceGradient']<thresholdVals.prePeakGradient) & (rawdf['prevNDayPriceGradient']>thresholdVals.prePeakGradient),1,0)
 
     return rawdf
 
+def plotPeaks(rawdf):
+    peaks = list(rawdf.loc[rawdf['isPeakIndicator']==1,['Close/Last']].itertuples())
+    peakIndexes = [(row.Index) for row in peaks]
+    peakPrices = [(row._1) for row in peaks]
+    
+
+    plt.plot(rawdf.index,rawdf['Close/Last'],label='Price')
+    plt.scatter(peakIndexes,peakPrices,marker='x',color='red')
+
+
+    plt.show()
+
+
 def splitIndicatorsMetrics(rawdf):
-    indicatorCols = ['Date','Close/Last','10to50SMA','10to50EMA','MACDSIG','MACDSIGchanged','normMACDSIGindicator','RSIindicator','RSIdifIndicator','ATRindicator','BBWClsPctDifIndicator','normOBVSMAindicator','buyingPressureIndicator','isPeakIndicator']
+    indicatorCols = ['Close/Last','10to50SMA','10to50EMA','MACDSIG','MACDSIGchanged','normMACDSIGindicator','RSIindicator','RSIdifIndicator','ATRindicator','BBWClsPctDifIndicator','normOBVSMAindicator','buyingPressureIndicator','isPeakIndicator']
 
     indicatorsDf = rawdf[indicatorCols]
     metricsDf = rawdf.drop(columns=indicatorCols)

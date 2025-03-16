@@ -1,4 +1,4 @@
-from trainStockNNfiles.dataRead import *
+from dataRead import *
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras import Sequential,layers
@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 import time
 import os
 
-from trainStockNNfiles.storeAnalytics import *
+from storeAnalytics import *
 
 
 import matplotlib.pyplot as plt
