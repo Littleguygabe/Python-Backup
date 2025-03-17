@@ -1,23 +1,42 @@
 from sympy import Matrix
 
+def printMatrix(A):
+    rows, cols = A.shape
+
+    for i in range(rows):
+        for j in range(cols):
+            print('\t',A[i,j],end = ' ')
+
+        print()
+
+    print()
+
+   
+
 def rref_ops(A):
     A = A.copy()  
     rows, cols = A.shape
+
+    printMatrix(A)
+
+
     lead = 0
     operations = []  
     for r in range(rows):
         if lead >= cols:  
             break
 
+        # want to check if any rows are dependent
+
 
         i = r
         while i < rows and A[i, lead] == 0:
-            i += 1
+            i += 1 #iterates down a column specified by lead
 
         if i == rows:  
-            lead += 1
+            lead += 1 #if i is the same as the number of rows there is no pivot
+                      #so moves to the next column
             continue
-
 
         if i != r:
             A.row_swap(i, r)
@@ -39,13 +58,20 @@ def rref_ops(A):
         lead += 1  
 
         ## need to check that the rows are in the correct order and that an linearly dependent rows are removed
+    curRow = 0
+    while curRow!=rows:
 
 
-    for i in range(rows):
-        for j in range(cols):
-            print('\t',A[i,j],end = ' ')
+        for j in range(curRow+1,rows):
+            divisible = all((b/a).is_Integer for a,b in zip(A.row(curRow),A.row(j)) if a!=0)
+            if divisible:
+                c = -(A[j,-1]/A[curRow,-1])
+                A = A.elementary_row_op('n->n+km',row=j,row2=curRow,k=c)
+                print('appending op')
+                operations.append(('scale',j,c))
+        curRow+=1
 
-        print()
+    printMatrix(A)
 
     return operations
 
@@ -59,4 +85,3 @@ A = Matrix([
 
 
 print(rref_ops(A))
-
