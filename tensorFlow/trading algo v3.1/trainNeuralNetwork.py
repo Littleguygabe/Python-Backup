@@ -1,16 +1,17 @@
 # neural network to indentify peaks within stock data
 import pandas as pd
 import os
-
+import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from keras import Sequential,layers
+from keras import Sequential,layers,losses
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import class_weight
 
 import matplotlib.pyplot as plt
 
 def trainNeuralNetwork(trainingDf):
-    dropOutRate = 0.3
+    dropOutRate = 0.2
     val_lossList = []
     train_lossList = []
 
@@ -18,8 +19,6 @@ def trainNeuralNetwork(trainingDf):
     plt.rc('axes', labelweight='bold', labelsize='large',
         titleweight='bold', titlesize=18, titlepad=10)
     plt.rc('animation', html='html5')
-    
-    scaler = StandardScaler()
 
     model = Sequential([
         layers.Dense(64,input_shape=(11,),activation='relu'),
@@ -33,8 +32,12 @@ def trainNeuralNetwork(trainingDf):
         layers.Dense(512,activation='relu'),
         layers.Dropout(rate=dropOutRate),
 
+        layers.Dense(1024,activation='relu'),
+        layers.Dropout(rate=dropOutRate),
+
         layers.Dense(512,activation='relu'),
         layers.Dropout(rate=dropOutRate),
+
 
         layers.Dense(256,activation='relu'),
         layers.Dropout(rate=dropOutRate),
@@ -42,11 +45,12 @@ def trainNeuralNetwork(trainingDf):
         layers.Dense(1,activation='sigmoid')
     ])    
 
+
     optimiser = keras.optimizers.Adam(learning_rate = 0.1)
 
     model.compile(
         optimizer=optimiser,
-        loss = 'binary_crossentropy',
+        loss = losses.BinaryCrossentropy(),
         metrics = ['accuracy']
     )
 
@@ -77,13 +81,21 @@ def trainNeuralNetwork(trainingDf):
 
     Xtrain,Xtest,ytrain,ytest = train_test_split(X,y,test_size=0.3,random_state=42)
 
+    class_weights = class_weight.compute_class_weight('balanced', 
+                                                  classes=np.unique(ytrain), 
+                                                  y=ytrain)
+    classWeights = dict(zip(np.unique(ytrain), class_weights))
+
+    #classWeights = {0:1,1:10}
+
     history = model.fit(
         Xtrain,ytrain,
         validation_data=(Xtest,ytest),
-        batch_size = 64,
-        epochs=750, 
+        batch_size = 256,
+        epochs=100, 
         callbacks=[reduce_lr,checkpoint_callback],
         #verbose=0,
+        class_weight=classWeights,
     )
 
     historyDf = pd.DataFrame(history.history)
