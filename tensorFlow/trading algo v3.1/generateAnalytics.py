@@ -106,25 +106,39 @@ def getOBV(rawdf):
 
     return rawdf
 
-def getPeaks(rawdf):    
+def getEntryExitPoints(rawdf):    
     ## look at the gradient of change for the N days after a point to classify as a peak
 
-    rawdf['futureNDayPriceGradient'] = rawdf['DailyChange'].shift((thresholdVals.peakLength-1)*-1).rolling(window=thresholdVals.peakLength).mean() 
-    rawdf['prevNDayPriceGradient'] = rawdf['DailyChange'].rolling(window=thresholdVals.prePeakLength).mean()
+    rawdf['futureNDayPriceGradientPeak'] = rawdf['DailyChange'].shift((thresholdVals.peakLength-1)*-1).rolling(window=thresholdVals.peakLength).mean() 
+    rawdf['prevNDayPriceGradientPeak'] = rawdf['DailyChange'].rolling(window=thresholdVals.prePeakLength).mean()
 
-    rawdf['isPeakIndicator'] = np.where((rawdf['futureNDayPriceGradient']<thresholdVals.prePeakGradient) & (rawdf['prevNDayPriceGradient']>thresholdVals.prePeakGradient),1,0)
 
+    rawdf['futureNDayPriceGradientTrough'] = rawdf['DailyChange'].shift((thresholdVals.troughLength-1)*-1).rolling(window=thresholdVals.troughLength).mean()
+    rawdf['prevNDayPriceGradientTrough'] = rawdf['DailyChange'].rolling(window=thresholdVals.preTroughLength).mean()
+
+
+    rawdf['isPeakIndicator'] = np.where((rawdf['futureNDayPriceGradientPeak']<thresholdVals.postPeakGradient)
+                                        & (rawdf['prevNDayPriceGradientPeak']>thresholdVals.prePeakGradient)
+                                        ,2, np.where((rawdf['futureNDayPriceGradientTrough']>thresholdVals.postTroughGradient)
+                                                    &(rawdf['prevNDayPriceGradientTrough']<thresholdVals.preTroughGradient)
+                                                    ,1,0)
+                                        )
     return rawdf
 
-def plotPeaks(rawdf):
-    peaks = list(rawdf.loc[rawdf['isPeakIndicator']==1,['Close/Last']].itertuples())
+
+
+def plotEntryExitPoints(rawdf):
+    peaks = list(rawdf.loc[rawdf['isPeakIndicator']==2,['Close/Last']].itertuples())
     peakIndexes = [(row.Index) for row in peaks]
     peakPrices = [(row._1) for row in peaks]
     
-
+    troughs = list(rawdf.loc[rawdf['isPeakIndicator']==1,['Close/Last']].itertuples())
+    troughIndexes = [(row.Index) for row in troughs]
+    troughPrices = [(row._1) for row in troughs]
+    
     plt.plot(rawdf.index,rawdf['Close/Last'],label='Price')
     plt.scatter(peakIndexes,peakPrices,marker='x',color='red')
-
+    plt.scatter(troughIndexes,troughPrices,marker='x',color = 'green')
 
     plt.show()
 
@@ -150,12 +164,16 @@ def getAnalyticDf(rawdf):
     rawdf = getOBV(rawdf)
     
     if generatingTrainingData:
-        rawdf = getPeaks(rawdf)
-
+        rawdf = getEntryExitPoints(rawdf)
 
 
     indicators,metrics = splitIndicatorsMetrics(rawdf)
 
+
+    #plotEntryExitPoints(rawdf)
+    symbol = rawdf[['symbol']].iloc[0,0 ]
+    count0,count1,count2 = indicators[['isPeakIndicator']].value_counts()
+    print(f'|{symbol}\t|{count0}\t\t|{count1}\t\t|{count2}\t\t|')
 
     return indicators
 
@@ -168,6 +186,9 @@ def main(rawdf):
 if __name__ == '__main__':
 
     fileList = os.listdir('nasdaq100')
+
+    print('|symbol\t|0 count\t|1 count\t|2 count\t|')
+
     for i in range(len(fileList)):
         testRawdf = pd.read_csv(f'nasdaq100/{fileList[i]}')
         indicators= main(testRawdf[::-1])
