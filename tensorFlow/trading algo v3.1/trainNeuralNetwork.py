@@ -7,11 +7,13 @@ from tensorflow import keras
 from keras import Sequential,layers,losses
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import class_weight
-
+from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 
+
+
 def trainNeuralNetwork(trainingDf):
-    dropOutRate = 0.2
+    dropOutRate = 0.0
     val_lossList = []
     train_lossList = []
 
@@ -42,7 +44,7 @@ def trainNeuralNetwork(trainingDf):
         layers.Dense(256,activation='relu'),
         layers.Dropout(rate=dropOutRate),
 
-        layers.Dense(1,activation='sigmoid')
+        layers.Dense(3,activation='softmax')
     ])    
 
 
@@ -50,7 +52,7 @@ def trainNeuralNetwork(trainingDf):
 
     model.compile(
         optimizer=optimiser,
-        loss = losses.BinaryCrossentropy(),
+        loss = 'categorical_crossentropy',
         metrics = ['accuracy']
     )
 
@@ -81,12 +83,17 @@ def trainNeuralNetwork(trainingDf):
 
     Xtrain,Xtest,ytrain,ytest = train_test_split(X,y,test_size=0.3,random_state=42)
 
+
     class_weights = class_weight.compute_class_weight('balanced', 
-                                                  classes=np.unique(ytrain), 
-                                                  y=ytrain)
-    classWeights = dict(zip(np.unique(ytrain), class_weights))
+                                                  classes=np.unique(y), 
+                                                  y=y)
+    classWeights = dict(enumerate(class_weights))
 
     #classWeights = {0:1,1:10}
+
+    #one hot encoding
+    ytrain = to_categorical(ytrain,num_classes = 3)
+    ytest = to_categorical(ytest,num_classes = 3)
 
     history = model.fit(
         Xtrain,ytrain,
