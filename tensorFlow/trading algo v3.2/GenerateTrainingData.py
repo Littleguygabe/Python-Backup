@@ -3,7 +3,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import thresholdVals
-import math
+import sys
+
 
 def getMAs(rawdf):
     rawdf = rawdf.copy()
@@ -136,7 +137,7 @@ def getAnalyticDf(rawdf):
         rawdf = getEntryExitPoints(rawdf)
         rawdf = rawdf.dropna()
         #rawdf = normaliseDF(rawdf.drop(columns=['symbol','Date']))
-        print(rawdf.columns)
+        #print(rawdf.columns)
 
 
     #plotEntryExitPoints(rawdf)
@@ -148,14 +149,53 @@ def main(rawdf):
     return rawdf
 
 
-def loadingBar(i):
-    os.system('cls')
-    loadingSymbols = ['▂','▃','▅','▇','▅','▃']
-    loadingSymbols = ['▁','▂','▃','▄','▅','▆','▇','█','▇','▆','▅','▄','▃','▂']
-    start = (i%len(loadingSymbols))
-    print(loadingSymbols[start])
-    print(' ',i)
+def saveDataframe(df):
+    saveFolder = 'analysisFiles'
+    maxFileSize = 100 #max file size in MB
 
+    for file in os.listdir(saveFolder):
+        os.remove(f'{saveFolder}/{file}')
+
+    loading_bar(8,1)
+    
+    df.to_csv(f'{saveFolder}/temp.csv')
+    loading_bar(8,2)
+    fileSizeMB = os.path.getsize(f'{saveFolder}/temp.csv')/(1024**2)
+    loading_bar(8,3)
+    os.remove(f'{saveFolder}/temp.csv')
+    loading_bar(8,5)
+
+
+    fileCount = 1
+    while fileSizeMB>maxFileSize:
+        fileSizeMB/=2
+        fileCount*=2
+
+    loading_bar(8,6)
+
+    splitDfLen = len(df)//fileCount
+    for i in range(fileCount-1):
+        df[splitDfLen*i:splitDfLen*(i+1)].to_csv(f'{saveFolder}/{i+1}.csv',index=False)
+
+    loading_bar(8,7)
+
+    df[splitDfLen*(fileCount-1):].to_csv(f'{saveFolder}/{fileCount}.csv',index=False)
+
+    loading_bar(8,8)
+    print()
+
+def loading_bar(total_steps, i, bar_length=40):
+
+    percent = (i / total_steps) * 100
+    hashes = '#' * int(i * bar_length / total_steps)
+    spaces = ' ' * (bar_length - len(hashes))
+    
+    sys.stdout.write(f'\r[{hashes}{spaces}] {percent:.2f}%')
+    sys.stdout.flush() 
+
+
+
+       
 def createTrainingDataFile():
     fileList = os.listdir('nasdaq100')
 
@@ -165,16 +205,14 @@ def createTrainingDataFile():
         testRawdf = pd.read_csv(f'nasdaq100/{fileList[i]}')
         rawdf = main(testRawdf[::-1])
         finalDf = pd.concat([finalDf,rawdf])
-        print(i)
-        #loadingBar(i)
+        loading_bar(len(fileList),i)
 
-    print(len(finalDf))
+    print()
+
     finalDf = finalDf.reset_index(drop=True,inplace=False)
-    print(finalDf.isna().any(axis=1).sum())
-    print(len(finalDf))
 
-    finalDf.to_csv('analysisTrainingData')
-
+    saveDataframe(finalDf)
+    print('Data Saved Successfully')
 
 if __name__ == '__main__':
     testing = False

@@ -1,15 +1,10 @@
-import time
-import os 
+maxfileSize = 50
+fileSizeMB = 130
 
-loadingSymbols = ['▂','▃','▅','▇','▅','▃']
-i = 0
-while True:
-    start = (i%len(loadingSymbols))
-    for j in range(len(loadingSymbols)):
-        index = (start+j)%len(loadingSymbols)
-        print(loadingSymbols[index],end='')
+fileCount = 1
+while fileSizeMB>maxfileSize:
+    fileSizeMB/=2
+    fileCount*=2
 
-    print()
-    time.sleep(0.1)
-    i+=1
-    os.system('cls')
+
+print(fileCount)
