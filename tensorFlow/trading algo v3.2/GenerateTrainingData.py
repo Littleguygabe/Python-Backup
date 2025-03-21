@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import thresholdVals
 import sys
 
+### figure out which data values need normalising and normalise them
+### use scatter graphs to plot a rough category of data against price (price Y axis, technical analytic X axis) -> could allow for classification???
+
+
+
 
 def getMAs(rawdf):
     rawdf = rawdf.copy()
