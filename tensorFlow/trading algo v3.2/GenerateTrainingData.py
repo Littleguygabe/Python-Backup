@@ -6,6 +6,7 @@ import thresholdVals
 import sys
 
 ### figure out which data values need normalising and normalise them
+
 ### use scatter graphs to plot a rough category of data against price (price Y axis, technical analytic X axis) -> could allow for classification???
 
 
@@ -120,9 +121,11 @@ def getEntryExitPoints(rawdf):
     return rawdf
 
 def normaliseDF(rawdf):
-    columns = rawdf.columns
-    for col in columns:
-        rawdf[col] = min_max_normalize(rawdf[col])
+    #normalise gain and loss relative the price for that day     
+
+
+
+
 
     return rawdf
 
@@ -137,6 +140,8 @@ def getAnalyticDf(rawdf):
     rawdf = getATR(rawdf)
     rawdf = getBB(rawdf)
     rawdf = getOBV(rawdf)
+
+    rawdf = normaliseDF(rawdf)
     
     if generatingTrainingData:
         rawdf = getEntryExitPoints(rawdf)
