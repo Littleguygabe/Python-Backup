@@ -1,9 +1,8 @@
 import math
 
-tolet = 5
-toilet = 7
-Or = 3.2
+tolet = 1
+toilet = 9
 
-ttpct = (tolet/(tolet+toilet)*100)/20
-combinedR = (Or+ttpct)/2
-print(math.ceil(combinedR)) 
+
+ttpcct = (tolet/(tolet+toilet))*100
+print(math.ceil(ttpcct/20))
