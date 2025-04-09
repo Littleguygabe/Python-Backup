@@ -1,10 +1,5 @@
-maxfileSize = 50
-fileSizeMB = 130
+import pandas as pd
+df = pd.read_csv('analysisFiles/1.csv')
 
-fileCount = 1
-while fileSizeMB>maxfileSize:
-    fileSizeMB/=2
-    fileCount*=2
-
-
-print(fileCount)
+for col in df.columns:
+    print(col)
