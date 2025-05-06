@@ -1,8 +1,7 @@
-import math
+import numpy as np
 
-tolet = 1
-toilet = 9
+A = [[0,1,1],
+     [1,0,1],
+     [0,1,0]]
 
-
-ttpcct = (tolet/(tolet+toilet))*100
-print(math.ceil(ttpcct/20))
+print(np.linalg.matrix_power(A,10))
